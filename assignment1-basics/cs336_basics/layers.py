@@ -1,6 +1,7 @@
 # cs336_basics/layers.py
 import torch 
 import torch.nn as nn
+import math
 from cs336_basics.model import RotaryPositionalEmbedding
 
 class Linear(nn.Module):
@@ -16,11 +17,11 @@ class Linear(nn.Module):
             torch.empty((out_features, in_features), device=device, dtype=dtype)
         )
             
-        std = torch.sqrt((2 / (self.in_features + self.out_features)))
+        std = math.sqrt((2 / (self.in_features + self.out_features)))
         nn.init.trunc_normal_(self.weight, mean=0.0, std=std, a=-3 * std, b=3 * std) # 截断正态分布初始化
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return x @ self.weight
+        return x @ self.weight.T
 
 class Embedding(nn.Module):
     def __init__(
@@ -34,7 +35,7 @@ class Embedding(nn.Module):
             torch.empty((num_embeddings, embedding_dim), device=device, dtype=dtype)
         )
 
-        a = torch.sqrt(3.0) / torch.sqrt(self.embedding_dim)  # 均匀分布初始化
+        a = math.sqrt(3.0) / math.sqrt(self.embedding_dim)  # 均匀分布初始化
         nn.init.uniform_(self.weight, -a, +a)
 
     
@@ -69,7 +70,7 @@ def softmax(x: torch.Tensor, dim: int = -1) -> torch.Tensor:
 def scaled_dot_product_attention(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
     d_k = q.size(-1)
     
-    scores = torch.matual(q, k.transpose(-2, -1)) / torch.sqrt(d_k)
+    scores = torch.matual(q, k.transpose(-2, -1)) / math.sqrt(d_k)
     
     if mask is not None:
         scores = scores.masked_fill(mask == 0, float('-inf'))
